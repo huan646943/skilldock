@@ -169,7 +169,7 @@ SkillDock 适合作为企业统一的 Skill 管理平台，对接公司内部商
 
 ## 下载
 
-前往 [SkillDock 最新版本](https://github.com/wanghuan9/skilldock/releases/latest) 下载安装包。
+前往 [SkillDock 最新版本](https://github.com/huan646943/skilldock/releases/latest) 下载安装包。
 
 | 平台 | 状态 |
 | --- | --- |

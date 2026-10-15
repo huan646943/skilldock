@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_REPO_URL="https://github.com/wanghuan9/skilldock.git"
-PUBLIC_RELEASE_REPO="wanghuan9/skilldock"
-PUBLIC_REPO_URL="https://github.com/wanghuan9/skilldock"
+SOURCE_REPO_URL="https://github.com/huan646943/skilldock.git"
+PUBLIC_RELEASE_REPO="huan646943/skilldock"
+PUBLIC_REPO_URL="https://github.com/huan646943/skilldock"
 DEFAULT_SIGNING_KEY_PATH="/Users/wanghuan/data/env/skilldock/skilldock-updater.key"
 FALLBACK_SIGNING_KEY_PATH="$HOME/.skilldock/release/skilldock-updater.key"
 LEGACY_SIGNING_KEY_PATH="$HOME/.skilldock/updater/skillm.key"
@@ -80,10 +80,10 @@ require_source_remote() {
   origin_url="$(git remote get-url origin)"
 
   case "$origin_url" in
-    "https://github.com/wanghuan9/skilldock"|\
-    "https://github.com/wanghuan9/skilldock.git"|\
-    "git@github.com:wanghuan9/skilldock.git"|\
-    "ssh://git@github.com/wanghuan9/skilldock.git")
+    "https://github.com/huan646943/skilldock"|\
+    "https://github.com/huan646943/skilldock.git"|\
+    "git@github.com:huan646943/skilldock.git"|\
+    "ssh://git@github.com/huan646943/skilldock.git")
       ;;
     *)
       die "origin must point to $SOURCE_REPO_URL, got: $origin_url"
@@ -405,7 +405,7 @@ collect_assets() {
 const fs = require("fs");
 
 const [version, tag, notes, releaseHistoryPath] = process.argv.slice(2);
-const releaseBaseUrl = `https://github.com/wanghuan9/skilldock/releases/download/${tag}`;
+const releaseBaseUrl = `https://github.com/huan646943/skilldock/releases/download/${tag}`;
 const readSignature = (arch) =>
   fs.readFileSync(`src-tauri/target/release/release-assets/SkillDock_${arch}.app.tar.gz.sig`, "utf8").trim();
 const generatedReleaseNotesHistory = fs.existsSync(releaseHistoryPath)

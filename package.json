@@ -3,7 +3,7 @@
   "version": "1.0.21",
   "description": "Desktop manager for AI coding skills, MCP servers, and plugins",
   "license": "MIT",
-  "repository": "https://github.com/wanghuan9/skilldock.git",
+  "repository": "https://github.com/huan646943/skilldock.git",
   "private": true,
   "type": "module",
   "scripts": {

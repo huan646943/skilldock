@@ -1,6 +1,6 @@
 # SkillDock 发布与自动更新
 
-`https://github.com/wanghuan9/skilldock` 同时是 SkillDock 的公开源码仓库和 Release 仓库。正式安装包、版本 tag、GitHub 自动生成的源码包与 `latest.json` 必须对应同一个公开提交。
+`https://github.com/huan646943/skilldock` 同时是 SkillDock 的公开源码仓库和 Release 仓库。正式安装包、版本 tag、GitHub 自动生成的源码包与 `latest.json` 必须对应同一个公开提交。
 
 ## 发布前准备
 
@@ -13,7 +13,7 @@
 - updater endpoint 继续指向：
 
   ```text
-  https://github.com/wanghuan9/skilldock/releases/latest/download/latest.json
+  https://github.com/huan646943/skilldock/releases/latest/download/latest.json
   ```
 
 推荐先把待发布 feature 分支合入 `main` 再发布。确实需要从 feature 分支发布时也可以执行，但该分支必须已经推送；发布脚本会让版本 tag 精确指向该分支的当前提交，不会错误绑定到 `main`。
@@ -70,7 +70,7 @@ Apple 公证账号优先读取环境变量 `APPLE_ID`。未设置时，脚本会
 
 ```bash
 gh workflow run release.yml \
-  --repo wanghuan9/skilldock \
+  --repo huan646943/skilldock \
   --ref feature/plugin-host-runtime-sync \
   -f release_tag=v1.0.9 \
   -f source_ref=feature/plugin-host-runtime-sync
@@ -85,7 +85,7 @@ gh workflow run release.yml \
 在以下页面配置：
 
 ```text
-https://github.com/wanghuan9/skilldock/settings/secrets/actions
+https://github.com/huan646943/skilldock/settings/secrets/actions
 ```
 
 必需 Secrets：
@@ -126,10 +126,10 @@ GitHub Release 正文、`latest.json.notes` 和 `latest.json.releaseNotesHistory
 发布完成后检查：
 
 ```bash
-gh release view v1.0.9 --repo wanghuan9/skilldock
+gh release view v1.0.9 --repo huan646943/skilldock
 git ls-remote --tags origin refs/tags/v1.0.9
 curl --fail --location \
-  https://github.com/wanghuan9/skilldock/releases/latest/download/latest.json
+  https://github.com/huan646943/skilldock/releases/latest/download/latest.json
 ```
 
 确认 macOS 和 Windows 安装包、updater 签名及 `latest.json` 均已上传，并确认 tag 指向本次构建的公开提交。

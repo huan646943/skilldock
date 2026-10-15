@@ -9,7 +9,7 @@ use serde_json::{Map, Value};
 use crate::workspace;
 
 const ERROR_LOG_FILE_NAME: &str = "errors.jsonl";
-const ISSUE_REPOSITORY_URL: &str = "https://github.com/wanghuan9/skilldock";
+const ISSUE_REPOSITORY_URL: &str = "https://github.com/huan646943/skilldock";
 const RECENT_ERROR_LIMIT: usize = 12;
 const MAX_LOG_ENTRY_BYTES: usize = 24 * 1024;
 const MAX_ISSUE_BODY_CHARS: usize = 8_000;
@@ -434,7 +434,20 @@ fn urlencoding(value: &str) -> String {
 mod tests {
     use serde_json::json;
 
-    use super::{build_issue_url_body, sanitize_value, FailureLogEntry};
+    use super::{build_issue_url_body, build_safe_issue_url, sanitize_value, FailureLogEntry};
+
+    #[test]
+    fn feedback_links_target_the_migrated_repository_and_preserve_the_draft() {
+        let title = "[Bug] 检查更新失败";
+        let body = "网络错误 & 诊断信息";
+        let issue_url = url::Url::parse(&build_safe_issue_url(title, body)).unwrap();
+
+        assert_eq!(issue_url.host_str(), Some("github.com"));
+        assert_eq!(issue_url.path(), "/huan646943/skilldock/issues/new");
+        let query: std::collections::HashMap<_, _> = issue_url.query_pairs().collect();
+        assert_eq!(query.get("title").map(|value| value.as_ref()), Some(title));
+        assert_eq!(query.get("body").map(|value| value.as_ref()), Some(body));
+    }
 
     #[test]
     fn issue_url_body_includes_the_matching_sanitized_failure_log_entry() {

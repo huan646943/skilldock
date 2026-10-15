@@ -21,6 +21,11 @@ test("includes root cause details in fallback feedback draft", async () => {
     },
   });
 
+  const issueUrl = new URL(draft.issueUrl);
+  expect(issueUrl.origin).toBe("https://github.com");
+  expect(issueUrl.pathname).toBe("/huan646943/skilldock/issues/new");
+  expect(issueUrl.searchParams.get("title")).toContain("check_for_app_update");
+  expect(issueUrl.searchParams.get("body")).toContain("dns error");
   expect(draft.body).toContain("rootCause: dns error: failed to lookup address information");
   expect(draft.body).toContain(
     "causeChain: client error (Connect) -> dns error: failed to lookup address information",

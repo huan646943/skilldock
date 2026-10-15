@@ -1046,7 +1046,7 @@ test("opens a prefilled feedback issue from MCP import failures", async () => {
   const feedbackSpy = vi.spyOn(skillClient, "recordFailureFeedback").mockResolvedValueOnce({
     title: "[Bug] import_mcp_servers_from_apps 失败",
     body: "diagnostics",
-    issueUrl: "https://github.com/wanghuan9/skilldock/issues/new?title=test",
+    issueUrl: "https://github.com/huan646943/skilldock/issues/new?title=test",
     logPath: "~/.skilldock/logs/errors.jsonl",
   });
   const openSpy = vi.spyOn(skillClient, "openExternalLink").mockResolvedValueOnce(undefined);
@@ -1067,7 +1067,7 @@ test("opens a prefilled feedback issue from MCP import failures", async () => {
       operation: "import_mcp_servers_from_apps",
       message: "Codex MCP 配置解析失败",
     }));
-    expect(openSpy).toHaveBeenCalledWith("https://github.com/wanghuan9/skilldock/issues/new?title=test");
+    expect(openSpy).toHaveBeenCalledWith("https://github.com/huan646943/skilldock/issues/new?title=test");
   });
 
   feedbackSpy.mockRestore();
@@ -1080,7 +1080,7 @@ test("keeps feedback entry for business-like MCP import failures and records dia
   const feedbackSpy = vi.spyOn(skillClient, "recordFailureFeedback").mockResolvedValueOnce({
     title: "[Bug] import_mcp_servers_from_apps 失败",
     body: "diagnostics",
-    issueUrl: "https://github.com/wanghuan9/skilldock/issues/new?title=test",
+    issueUrl: "https://github.com/huan646943/skilldock/issues/new?title=test",
     logPath: "~/.skilldock/logs/errors.jsonl",
   });
   const openSpy = vi.spyOn(skillClient, "openExternalLink").mockResolvedValueOnce(undefined);
@@ -1104,7 +1104,7 @@ test("keeps feedback entry for business-like MCP import failures and records dia
   await userEvent.click(screen.getByRole("button", { name: "反馈" }));
 
   await waitFor(() => {
-    expect(openSpy).toHaveBeenCalledWith("https://github.com/wanghuan9/skilldock/issues/new?title=test");
+    expect(openSpy).toHaveBeenCalledWith("https://github.com/huan646943/skilldock/issues/new?title=test");
   });
 
   feedbackSpy.mockRestore();

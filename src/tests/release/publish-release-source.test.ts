@@ -61,6 +61,34 @@ afterEach(() => {
 });
 
 describe("release source guard", () => {
+  test("generates updater download URLs for the migrated repository", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldock-release-assets-"));
+    temporaryRoots.push(root);
+    const bundle = path.join(root, "src-tauri/target/aarch64-apple-darwin/release/bundle");
+    fs.mkdirSync(path.join(bundle, "dmg"), { recursive: true });
+    fs.mkdirSync(path.join(bundle, "macos"));
+    fs.writeFileSync(path.join(bundle, "dmg/SkillDock_1.0.21_aarch64.dmg"), "dmg");
+    fs.writeFileSync(path.join(bundle, "macos/SkillDock.app.tar.gz"), "archive");
+    fs.writeFileSync(path.join(bundle, "macos/SkillDock.app.tar.gz.sig"), "test-signature");
+
+    execFileSync("bash", [
+      "-c",
+      'source "$1"; collect_assets 1.0.21 v1.0.21 "Release notes" missing-history.json',
+      "bash",
+      publishScript,
+    ], { cwd: root, encoding: "utf8" });
+
+    const metadata = JSON.parse(fs.readFileSync(
+      path.join(root, "src-tauri/target/release/release-assets/latest.json"), "utf8",
+    ));
+    expect(metadata.version).toBe("1.0.21");
+    expect(metadata.platforms["darwin-aarch64"].url).toBe(
+      "https://github.com/huan646943/skilldock/releases/download/v1.0.21/SkillDock_aarch64.app.tar.gz",
+    );
+    expect(metadata.platforms["darwin-aarch64-app"].url).toBe(metadata.platforms["darwin-aarch64"].url);
+    expect(metadata.platforms["darwin-aarch64"].signature).toBe("test-signature");
+  });
+
   test("validates curated notes through the full-range generator instead of copying them", () => {
     const script = fs.readFileSync(publishScript, "utf8");
 

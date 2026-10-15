@@ -60,7 +60,7 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             --location \
             --output "$release_json" \
-            "https://api.github.com/repos/wanghuan9/skilldock/releases/tags/${RELEASE_TAG}")"
+            "https://api.github.com/repos/huan646943/skilldock/releases/tags/${RELEASE_TAG}")"
 
           echo "exists=false" >> "$GITHUB_OUTPUT"
           echo "complete=false" >> "$GITHUB_OUTPUT"
@@ -251,7 +251,7 @@ jobs:
           if (( ${#missing[@]} > 0 )); then
             printf 'Missing required release secret(s): %s\n' "${missing[*]}" >&2
             printf '\nConfigure them on the SkillDock repository:\n' >&2
-            printf 'https://github.com/wanghuan9/skilldock/settings/secrets/actions\n' >&2
+            printf 'https://github.com/huan646943/skilldock/settings/secrets/actions\n' >&2
             exit 1
           fi
 
@@ -268,7 +268,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          owner: wanghuan9
+          owner: huan646943
           repo: skilldock
           tagName: ${{ env.RELEASE_TAG }}
           releaseCommitish: ${{ steps.release_source.outputs.sha }}
@@ -315,7 +315,7 @@ jobs:
           merged_updater_dir="$RUNNER_TEMP/merged-updater"
           mkdir -p "$updated_updater_dir" "$merged_updater_dir"
           gh release download "$RELEASE_TAG" \
-            --repo wanghuan9/skilldock \
+            --repo huan646943/skilldock \
             --pattern latest.json \
             --dir "$updated_updater_dir"
           jq -s '.[1] * .[0]' \
@@ -324,5 +324,5 @@ jobs:
             > "$merged_updater_dir/latest.json"
           gh release upload "$RELEASE_TAG" \
             "$merged_updater_dir/latest.json" \
-            --repo wanghuan9/skilldock \
+            --repo huan646943/skilldock \
             --clobber
