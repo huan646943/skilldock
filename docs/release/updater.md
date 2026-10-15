@@ -20,6 +20,14 @@
 
 `release` 和 `workflow_dispatch` 事件要求 workflow 文件已经存在于 GitHub 默认分支。因此首次启用这套公开发布流程时，必须先把 `.github/workflows/release.yml` 合入 `main`。完成首次启用后，后续构建源仍可以选择任意已推送 feature 分支。
 
+## GitHub 登录可用性
+
+仓库迁移不会自动恢复原账号下的 OAuth 应用。发布前还需确认 `src-tauri/src/github_api.rs` 中的 OAuth Client ID 对应可用的应用，并在 GitHub 应用设置中启用 Device Flow。Client ID 是公开标识，无需配置 Client Secret。维护者也可在编译时设置现有的 `SKILLDOCK_GITHUB_CLIENT_ID` 环境变量覆盖默认值。
+
+验收时点击设置中的“登录 GitHub”，应能取得验证码并完成授权。若 `POST https://github.com/login/device/code` 返回 HTTP 404，需由应用所有者检查 OAuth 应用及 Client ID；修改仓库 URL 无法修复这个登录入口。
+
+用户可通过设置 → 账号与备份 → 使用 Personal Access Token 连接，绕过 OAuth 应用。现有的“前往 GitHub 生成”入口请求经典 Token 的 `repo` 权限以支持私有备份；Token 保存到本地配置文件。连接后再按需启用备份并验证同步，不应把显示“已连接”当作同步成功。
+
 ## 版本号
 
 发布前同步修改：
