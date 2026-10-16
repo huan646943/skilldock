@@ -1,6 +1,6 @@
 # SkillDock 发布与自动更新
 
-`https://github.com/wanghuan9/skilldock` 同时是 SkillDock 的公开源码仓库和 Release 仓库。正式安装包、版本 tag、GitHub 自动生成的源码包与 `latest.json` 必须对应同一个公开提交。
+`https://github.com/huan646943/skilldock` 同时是 SkillDock 的公开源码仓库和 Release 仓库。正式安装包、版本 tag、GitHub 自动生成的源码包与 `latest.json` 必须对应同一个公开提交。
 
 ## 发布前准备
 
@@ -13,12 +13,20 @@
 - updater endpoint 继续指向：
 
   ```text
-  https://github.com/wanghuan9/skilldock/releases/latest/download/latest.json
+  https://github.com/huan646943/skilldock/releases/latest/download/latest.json
   ```
 
 推荐先把待发布 feature 分支合入 `main` 再发布。确实需要从 feature 分支发布时也可以执行，但该分支必须已经推送；发布脚本会让版本 tag 精确指向该分支的当前提交，不会错误绑定到 `main`。
 
 `release` 和 `workflow_dispatch` 事件要求 workflow 文件已经存在于 GitHub 默认分支。因此首次启用这套公开发布流程时，必须先把 `.github/workflows/release.yml` 合入 `main`。完成首次启用后，后续构建源仍可以选择任意已推送 feature 分支。
+
+## GitHub 登录可用性
+
+仓库迁移不会自动恢复原账号下的 OAuth 应用。发布前还需确认 `src-tauri/src/github_api.rs` 中的 OAuth Client ID 对应可用的应用，并在 GitHub 应用设置中启用 Device Flow。Client ID 是公开标识，无需配置 Client Secret。维护者也可在编译时设置现有的 `SKILLDOCK_GITHUB_CLIENT_ID` 环境变量覆盖默认值。
+
+验收时点击设置中的“登录 GitHub”，应能取得验证码并完成授权。若 `POST https://github.com/login/device/code` 返回 HTTP 404，需由应用所有者检查 OAuth 应用及 Client ID；修改仓库 URL 无法修复这个登录入口。
+
+用户可通过设置 → 账号与备份 → 使用 Personal Access Token 连接，绕过 OAuth 应用。现有的“前往 GitHub 生成”入口请求经典 Token 的 `repo` 权限以支持私有备份；Token 保存到本地配置文件。连接后再按需启用备份并验证同步，不应把显示“已连接”当作同步成功。
 
 ## 版本号
 
@@ -70,7 +78,7 @@ Apple 公证账号优先读取环境变量 `APPLE_ID`。未设置时，脚本会
 
 ```bash
 gh workflow run release.yml \
-  --repo wanghuan9/skilldock \
+  --repo huan646943/skilldock \
   --ref feature/plugin-host-runtime-sync \
   -f release_tag=v1.0.9 \
   -f source_ref=feature/plugin-host-runtime-sync
@@ -85,7 +93,7 @@ gh workflow run release.yml \
 在以下页面配置：
 
 ```text
-https://github.com/wanghuan9/skilldock/settings/secrets/actions
+https://github.com/huan646943/skilldock/settings/secrets/actions
 ```
 
 必需 Secrets：
@@ -126,10 +134,10 @@ GitHub Release 正文、`latest.json.notes` 和 `latest.json.releaseNotesHistory
 发布完成后检查：
 
 ```bash
-gh release view v1.0.9 --repo wanghuan9/skilldock
+gh release view v1.0.9 --repo huan646943/skilldock
 git ls-remote --tags origin refs/tags/v1.0.9
 curl --fail --location \
-  https://github.com/wanghuan9/skilldock/releases/latest/download/latest.json
+  https://github.com/huan646943/skilldock/releases/latest/download/latest.json
 ```
 
 确认 macOS 和 Windows 安装包、updater 签名及 `latest.json` 均已上传，并确认 tag 指向本次构建的公开提交。

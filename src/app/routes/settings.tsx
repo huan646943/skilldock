@@ -62,7 +62,6 @@ import {
 
 const GITHUB_TOKEN_CREATION_URL = "https://github.com/settings/tokens/new?description=SkillDock&scopes=repo";
 const GITHUB_COPY_FEEDBACK_DURATION_MS = 1_500;
-const SHOW_GITHUB_PAT_LOGIN = false;
 
 function releaseSettingsEventListener(unlisten: (() => void) | undefined) {
   if (!unlisten) {
@@ -1647,6 +1646,9 @@ export function SettingsRoute() {
                 </div>
               ) : githubAuthMode === "pat" ? (
                 <div className="settings-github-token-control">
+                  <span className="settings-form-item__description">
+                    {t("settings.githubApi.description")}
+                  </span>
                   <div className="settings-github-token-input-wrap">
                     <div className="settings-github-token-input-shell">
                       <input
@@ -1707,15 +1709,13 @@ export function SettingsRoute() {
                     </svg>
                     {t(isConnectingGithub ? "settings.github.connecting" : "settings.github.login")}
                   </button>
-                  {SHOW_GITHUB_PAT_LOGIN ? (
-                    <button
-                      type="button"
-                      className="secondary-button secondary-button--compact settings-github-connect__action"
-                      onClick={() => setGithubAuthMode("pat")}
-                    >
-                      {t("settings.github.usePat")}
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    className="secondary-button secondary-button--compact settings-github-connect__action"
+                    onClick={() => setGithubAuthMode("pat")}
+                  >
+                    {t("settings.github.usePat")}
+                  </button>
                 </div>
               )}
             </div>

@@ -97,7 +97,7 @@ test("opens GitHub account settings after a rate-limited Agent CLI refresh", asy
     "settings-github-connect__action",
     "settings-github-connect__login",
   );
-  expect(screen.queryByRole("button", { name: "使用 Personal Access Token" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "使用 Personal Access Token" })).toBeInTheDocument();
 });
 
 test("opens GitHub account settings when the marketplace requests login", async () => {
@@ -462,16 +462,35 @@ test("allows selecting default open tool in settings", async () => {
   expect(screen.queryByText("CodeBuddy")).not.toBeInTheDocument();
 });
 
-test("keeps the Personal Access Token entry hidden while disconnected", async () => {
+test("connects with a Personal Access Token when GitHub device login returns 404", async () => {
   const user = userEvent.setup();
+  const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+  vi.mocked(invoke).mockRejectedValueOnce("启动 GitHub 登录失败: HTTP 404 Not Found");
   window.localStorage.clear();
   render(<App />);
 
   await user.click(screen.getByRole("button", { name: /设置/ }));
   expect(screen.getByRole("heading", { name: "账号与备份" })).toBeInTheDocument();
   expect(screen.getByText("未连接")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "登录 GitHub" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "使用 Personal Access Token" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "登录 GitHub" }));
+  expect(await screen.findByText("启动 GitHub 登录失败: HTTP 404 Not Found")).toBeInTheDocument();
+  expect(invoke).toHaveBeenCalledWith("start_github_device_flow", { backupScope: true });
+  expect(screen.queryByLabelText("GitHub Token")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "使用 Personal Access Token" }));
+  const tokenInput = screen.getByLabelText("GitHub Token");
+  expect(tokenInput).toHaveAttribute("type", "password");
+  expect(screen.getByText(/repo 权限支持私有备份，Token 会保存到本地配置文件/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "前往 GitHub 生成 ↗" }));
+  expect(openSpy).toHaveBeenCalledWith(
+    "https://github.com/settings/tokens/new?description=SkillDock&scopes=repo",
+    "_blank",
+    "noopener,noreferrer",
+  );
+  await user.type(tokenInput, "test-token");
+  await user.click(screen.getByRole("button", { name: "连接" }));
+  expect(await screen.findByText("已通过 Personal Access Token 连接，GitHub API 已启用。")).toBeInTheDocument();
   expect(screen.queryByLabelText("GitHub Token")).not.toBeInTheDocument();
 });
 

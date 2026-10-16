@@ -10,11 +10,19 @@ function readRepositoryFile(relativePath: string) {
 }
 
 describe("public release workflow contract", () => {
+  test("checks for updates from the migrated release repository", () => {
+    const config = JSON.parse(readRepositoryFile("src-tauri/tauri.conf.json"));
+
+    expect(config.plugins.updater.endpoints).toEqual([
+      "https://github.com/huan646943/skilldock/releases/latest/download/latest.json",
+    ]);
+  });
+
   test("binds local releases to the exact pushed public commit", () => {
     const publishScript = readRepositoryFile("scripts/publish-release.sh");
 
     expect(publishScript).toContain(
-      'SOURCE_REPO_URL="https://github.com/wanghuan9/skilldock.git"',
+      'SOURCE_REPO_URL="https://github.com/huan646943/skilldock.git"',
     );
     expect(publishScript).toContain("require_pushed_head");
     expect(publishScript).toContain("require_release_workflow_on_default_branch");

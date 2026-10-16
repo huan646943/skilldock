@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_REPO="wanghuan9/skilldock"
+SOURCE_REPO="huan646943/skilldock"
 REQUIRED_SOURCE_SECRETS=(
   APPLE_CERTIFICATE
   APPLE_CERTIFICATE_PASSWORD

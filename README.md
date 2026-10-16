@@ -168,7 +168,7 @@ SkillDock is well suited as a unified enterprise Skill management platform. It c
 
 ## Download
 
-Download the latest [SkillDock release](https://github.com/wanghuan9/skilldock/releases/latest).
+Download the latest [SkillDock release](https://github.com/huan646943/skilldock/releases/latest).
 
 | Platform | Status |
 | --- | --- |
