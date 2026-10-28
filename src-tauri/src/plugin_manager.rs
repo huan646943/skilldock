@@ -711,7 +711,102 @@ fn list_installed_plugins_blocking_with_mode(
     plugins.extend(crate::plugin_hosts::scan_opencode_config_plugins());
     plugins.extend(crate::plugin_hosts::scan_lockfile_plugins("omp"));
     plugins.extend(crate::plugin_hosts::scan_lockfile_plugins("pi"));
-    dedupe_and_sort_plugins(plugins)
+    let mut plugins = dedupe_and_sort_plugins(plugins)?;
+    if let Some(home) = workspace::home_dir_option() {
+        let paths = opencode_configured_skill_paths(&home);
+        for plugin in &mut plugins {
+            if opencode_uses_plugin_skills(Path::new(&plugin.root_path), &plugin.components, &paths)
+            {
+                plugin.configured_skill_hosts.push("opencode".to_string());
+            }
+        }
+    }
+    Ok(plugins)
+}
+
+fn opencode_configured_skill_paths(home: &Path) -> Vec<PathBuf> {
+    use jsonc_parser::JsonValue as JsoncValue;
+    let mut paths = Vec::new();
+    for config in workspace::opencode_config_paths_for_home(home) {
+        let Ok(text) = fs::read_to_string(config) else {
+            continue;
+        };
+        let Ok(Some(JsoncValue::Object(object))) =
+            jsonc_parser::parse_to_value(text.trim_start_matches('\u{feff}'), &Default::default())
+        else {
+            continue;
+        };
+        let Some(skills) = object.get_array("skills") else {
+            continue;
+        };
+        for value in skills.iter() {
+            let JsoncValue::String(value) = value else {
+                continue;
+            };
+            let path = if let Some(relative) = value.strip_prefix("~/") {
+                home.join(relative)
+            } else {
+                PathBuf::from(value.as_ref())
+            };
+            if path.is_absolute() {
+                if let Ok(path) = fs::canonicalize(path) {
+                    if path.is_dir() {
+                        paths.push(path);
+                    }
+                }
+            }
+        }
+    }
+    paths
+}
+
+fn opencode_uses_plugin_skills(
+    root: &Path,
+    components: &[PluginComponentSummary],
+    paths: &[PathBuf],
+) -> bool {
+    let Ok(root) = fs::canonicalize(root) else {
+        return false;
+    };
+    components
+        .iter()
+        .filter(|item| item.asset_type == "skill")
+        .any(|item| {
+            let candidate = root.join(&item.package_item_id);
+            let skill = if candidate.is_dir() {
+                candidate.join("SKILL.md")
+            } else {
+                candidate
+            };
+            let Ok(skill) = fs::canonicalize(skill) else {
+                return false;
+            };
+            skill.is_file()
+                && skill.starts_with(&root)
+                && paths.iter().any(|path| {
+                    let Ok(relative) = skill.strip_prefix(path) else {
+                        return false;
+                    };
+                    let parents = relative.parent().unwrap_or(Path::new(""));
+                    let mut cursor = path.to_path_buf();
+                    let mut count = 0;
+                    for component in parents.components() {
+                        let Component::Normal(name) = component else {
+                            return false;
+                        };
+                        let name = name.to_string_lossy();
+                        if name.starts_with('.')
+                            || name == "node_modules"
+                            || cursor.join("SKILL.md").is_file()
+                        {
+                            return false;
+                        }
+                        cursor.push(name.as_ref());
+                        count += 1;
+                    }
+                    count <= 6
+                })
+        })
 }
 
 fn plugin_list_cache_file() -> Option<PathBuf> {
@@ -2656,6 +2751,7 @@ fn build_claude_marketplace_entry_summary(
         description: entry.description,
         host_tool: "claude-code".to_string(),
         related_host_tools: Vec::new(),
+        configured_skill_hosts: Vec::new(),
         kind: "plugin-repo".to_string(),
         root_path: path_to_string(&root),
         display_root_path: path_to_string(plugin_root),
@@ -9727,6 +9823,7 @@ fn build_installed_plugin_summary_with_manifest(
         description: plugin_description(&manifest),
         host_tool: descriptor.host_tool,
         related_host_tools: Vec::new(),
+        configured_skill_hosts: Vec::new(),
         kind: "plugin-repo".to_string(),
         root_path: path_to_string(&root),
         display_root_path: path_to_string(&display_root),
@@ -12911,6 +13008,69 @@ mod tests {
         }
         fs::create_dir_all(&path).expect("create temp test dir");
         path
+    }
+
+    #[test]
+    fn opencode_configured_skill_paths_match_existing_plugin_skills_only() {
+        let home = temp_test_dir("opencode-skill-config");
+        let root = home.join(".skilldock/plugins/waza");
+        let skills = root.join("skills");
+        fs::create_dir_all(skills.join("hunt")).unwrap();
+        fs::write(skills.join("hunt/SKILL.md"), "---\nname: hunt\n---\n").unwrap();
+        fs::create_dir_all(home.join(".config/opencode")).unwrap();
+        fs::write(home.join(".config/opencode/opencode.jsonc"), "\u{feff}{ // comment\n \"skills\": [\"~/.skilldock/plugins/waza/skills\", \"relative\", \"https://example.com/skills\"]\n}").unwrap();
+        fs::create_dir_all(home.join("other")).unwrap();
+        fs::write(
+            home.join(".config/opencode/opencode.json"),
+            "{\"skills\":[\"~/missing\",\"~/other\"]}",
+        )
+        .unwrap();
+        let components = vec![PluginComponentSummary {
+            id: "hunt".into(),
+            name: "hunt".into(),
+            description: String::new(),
+            asset_type: "skill".into(),
+            owner_plugin_id: String::new(),
+            package_item_id: "skills/hunt".into(),
+        }];
+        let paths = super::opencode_configured_skill_paths(&home);
+        assert_eq!(paths.len(), 2);
+        assert!(super::opencode_uses_plugin_skills(
+            &root,
+            &components,
+            &paths
+        ));
+        assert!(!super::opencode_uses_plugin_skills(
+            &root,
+            &components,
+            &[home.join("other")]
+        ));
+        fs::write(skills.join("SKILL.md"), "parent").unwrap();
+        assert!(!super::opencode_uses_plugin_skills(
+            &root,
+            &components,
+            &paths
+        ));
+        fs::remove_file(skills.join("SKILL.md")).unwrap();
+        for name in [".hidden/secret", "node_modules/secret", "a/b/c/d/e/f/g"] {
+            let dir = skills.join(name);
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(dir.join("SKILL.md"), "hidden or too deep").unwrap();
+            let mut component = components[0].clone();
+            component.package_item_id = format!("skills/{name}");
+            assert!(!super::opencode_uses_plugin_skills(
+                &root,
+                &[component],
+                &paths
+            ));
+        }
+        fs::remove_file(skills.join("hunt/SKILL.md")).unwrap();
+        assert!(!super::opencode_uses_plugin_skills(
+            &root,
+            &components,
+            &paths
+        ));
+        let _ = fs::remove_dir_all(home);
     }
 
     #[test]
@@ -20836,6 +20996,7 @@ source = "__SOURCE__"
             description: "Battle-tested Claude Code plugin".to_string(),
             host_tool: "claude-code".to_string(),
             related_host_tools: Vec::new(),
+            configured_skill_hosts: Vec::new(),
             kind: "plugin-repo".to_string(),
             root_path: "/Users/demo/.claude/plugins/cache/ecc/ecc/1.10.0".to_string(),
             display_root_path: "/Users/demo/.claude/plugins/cache/ecc/ecc/1.10.0".to_string(),
@@ -20895,6 +21056,7 @@ source = "__SOURCE__"
             description: "Battle-tested Claude Code plugin".to_string(),
             host_tool: "claude-code".to_string(),
             related_host_tools: Vec::new(),
+            configured_skill_hosts: Vec::new(),
             kind: "plugin-repo".to_string(),
             root_path: "/Users/demo/.claude/plugins/cache/everything-claude-code/everything-claude-code/1.10.0".to_string(),
             display_root_path:

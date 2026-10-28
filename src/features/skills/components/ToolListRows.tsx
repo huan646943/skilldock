@@ -31,6 +31,7 @@ type ToolListRowProps = {
   rowId?: string;
   name: string;
   subtitle: string;
+  summaryDescription?: string;
   leading?: ReactNode;
   meta?: ReactNode;
   badges?: RowBadge[];
@@ -74,6 +75,7 @@ export function ToolListRow(props: ToolListRowProps) {
     rowId,
     onExpandedChange,
     subtitle,
+    summaryDescription,
     expandLabel = "展开",
     collapseLabel = "收起",
     layout = "list",
@@ -165,6 +167,8 @@ export function ToolListRow(props: ToolListRowProps) {
           aria-expanded={selectionMode ? undefined : expanded}
           aria-checked={selectionMode ? selected : undefined}
           aria-label={selectionMode ? selectionLabel : `${expanded ? collapseLabel : expandLabel} ${name}`}
+          aria-description={summaryDescription}
+          data-tooltip={summaryDescription}
         >
           {selectionMode ? <BatchSelectionMark checked={selected} /> : null}
           {leading ? <span className="tool-list-row__leading">{leading}</span> : null}

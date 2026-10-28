@@ -1064,6 +1064,7 @@ fn plugin_summary(args: PluginSummaryArgs<'_>) -> PluginSummary {
         description: args.description.to_string(),
         host_tool: args.host_tool.to_string(),
         related_host_tools: Vec::new(),
+        configured_skill_hosts: Vec::new(),
         kind: "plugin-repo".to_string(),
         root_path: root_path.clone(),
         display_root_path: display_root.clone(),

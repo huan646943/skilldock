@@ -719,6 +719,9 @@ function normalizePluginSummary(plugin: LegacyPluginSummary): PluginSummary {
     relatedHostTools: Array.isArray(plugin.relatedHostTools)
       ? plugin.relatedHostTools.filter(isPluginHostTool)
       : [],
+    configuredSkillHosts: Array.isArray(plugin.configuredSkillHosts)
+      ? plugin.configuredSkillHosts.filter(isPluginHostTool)
+      : [],
     kind: normalizePluginKind(plugin.kind),
     rootPath: plugin.rootPath ?? "",
     displayRootPath: plugin.displayRootPath ?? plugin.rootPath ?? "",
