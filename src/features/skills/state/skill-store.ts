@@ -79,6 +79,7 @@ export type PluginSummary = {
   description: string;
   hostTool: PluginHostTool;
   relatedHostTools?: PluginHostTool[];
+  configuredSkillHosts?: PluginHostTool[];
   kind: PluginKind;
   rootPath: string;
   displayRootPath?: string;

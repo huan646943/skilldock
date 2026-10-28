@@ -123,6 +123,7 @@ type PluginHostCoverageEntry = {
   hostTool: PluginHostTool;
   enabledState: PluginSummary["enabledState"];
   hasError: boolean;
+  skillConfigured?: boolean;
 };
 const pluginTabs: { key: PluginTabKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -668,6 +669,7 @@ function buildAllTabPlugins(plugins: PluginSummary[]): PluginSummary[] {
     return {
       ...primaryPlugin,
       relatedHostTools,
+      configuredSkillHosts: [...new Set(sortedGroup.flatMap((item) => item.configuredSkillHosts ?? []))],
       components: uniqueComponents,
       scopes: uniqueScopes,
       enabledState,
@@ -1011,7 +1013,7 @@ function getPluginHostCoverageEntriesForSummary(
     buildPluginAggregateKey(candidate) === buildPluginAggregateKey(plugin)
     && getPluginInstanceKey(candidate) !== getPluginInstanceKey(plugin)
   ));
-  const entries = getPluginHostCoverageEntries([plugin, ...relatedPlugins]);
+  const entries: PluginHostCoverageEntry[] = getPluginHostCoverageEntries([plugin, ...relatedPlugins]);
   const coveredHostTools = new Set(entries.map((entry) => entry.hostTool));
 
   if (includeRelatedHostTools) {
@@ -1022,8 +1024,16 @@ function getPluginHostCoverageEntriesForSummary(
           enabledState: "unknown",
           hasError: false,
         });
+        coveredHostTools.add(hostTool);
       }
     }
+  }
+
+  const configuredSkillHosts = new Set(
+    [plugin, ...relatedPlugins].flatMap((item) => item.configuredSkillHosts ?? []),
+  );
+  for (const hostTool of configuredSkillHosts) {
+    entries.push({ hostTool, enabledState: "enabled", hasError: false, skillConfigured: true });
   }
 
   return entries.sort((left, right) => pluginTabs
@@ -1043,10 +1053,12 @@ function renderPluginHostCoverageList(
   }
 
   return (
-    <span className="plugins-page__enabled-badge-hosts" aria-label={t("plugins.installedHosts")}>
+    <span className="plugins-page__enabled-badge-hosts" aria-label={t(hostCoverageEntries.some((entry) => entry.skillConfigured) ? "plugins.hostsAndSkills" : "plugins.installedHosts")}>
       {hostCoverageEntries.map((entry) => (
         <span
-          key={entry.hostTool}
+          key={`${entry.hostTool}:${entry.skillConfigured ? "skills" : "plugin"}`}
+          role="img"
+          aria-label={getPluginHostCoverageTooltip(entry, t)}
           className={`plugins-page__host-coverage-item is-${entry.enabledState}${entry.hasError ? " has-error" : ""}`}
           data-tooltip={getPluginHostCoverageTooltip(entry, t)}
         >
@@ -1065,6 +1077,9 @@ function getPluginHostCoverageTooltip(
   t: ReturnType<typeof useTranslate>["t"],
 ) {
   const hostLabel = getHostLabel(entry.hostTool);
+  if (entry.skillConfigured) {
+    return t("plugins.hostCoverage.skillsConfigured", { host: hostLabel });
+  }
   if (entry.hasError) {
     return t("plugins.hostCoverage.error", { host: hostLabel });
   }
@@ -1098,7 +1113,7 @@ function renderPluginHostCoverageBadge(
   const hiddenCount = Math.max(hostCoverageEntries.length - visibleEntries.length, 0);
 
   return (
-    <span className="plugins-page__enabled-badge-hosts" aria-label={t("plugins.installedHostsFor", { name: getPluginDisplayName(plugin) })}>
+    <span className="plugins-page__enabled-badge-hosts" aria-label={hostCoverageEntries.some((entry) => entry.skillConfigured) ? t("plugins.hostsAndSkills") : t("plugins.installedHostsFor", { name: getPluginDisplayName(plugin) })}>
       {renderPluginHostCoverageList(visibleEntries, t)}
       {hiddenCount > 0 ? (
         <span className="plugins-page__host-coverage-more">{`+${hiddenCount}`}</span>
@@ -3525,13 +3540,17 @@ export function PluginsRoute(props: PluginsRouteProps = {}) {
               tone: "info" as const,
             }));
             const hostCoverageEntries = getPluginHostCoverageEntriesForSummary(plugin, plugins);
-            const enabledHostCoverageEntries = hostCoverageEntries.filter((entry) => entry.enabledState === "enabled");
+            const configuredHosts = new Set(hostCoverageEntries.filter((entry) => entry.skillConfigured).map((entry) => entry.hostTool));
+            const enabledHostCoverageEntries = hostCoverageEntries.filter((entry) => (
+              entry.enabledState === "enabled" || configuredHosts.has(entry.hostTool)
+            ));
             const hostCoverageBadge = renderPluginHostCoverageBadge(plugin, hostCoverageEntries, t);
 
             return (
               <ToolListRow
                 key={pluginKey}
                 rowId={pluginKey}
+                summaryDescription={configuredHosts.size ? hostCoverageEntries.map((entry) => getPluginHostCoverageTooltip(entry, t)).join("; ") : undefined}
                 name={pluginDisplayName}
                 subtitle={getPluginSubtitle(plugin, t)}
                 leading={<PluginListIcon name={pluginDisplayName} />}

@@ -63,6 +63,8 @@ pub struct PluginSummary {
     pub host_tool: String,
     #[serde(default)]
     pub related_host_tools: Vec<String>,
+    #[serde(default)]
+    pub configured_skill_hosts: Vec<String>,
     pub kind: String,
     pub root_path: String,
     #[serde(default)]

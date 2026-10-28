@@ -2241,6 +2241,45 @@ test("renders component summaries as separate badges and keeps the plugin descri
   expect(hostCoverageItems).toHaveLength(1);
 });
 
+test("shows configured OpenCode skills without treating them as a native plugin installation", async () => {
+  const plugins: PluginSummary[] = [{
+    ...pluginFixtures[0],
+    name: "Waza Test",
+    configuredSkillHosts: ["opencode"],
+  }];
+  vi.spyOn(skillClient, "fetchStartupInstalledPlugins").mockResolvedValueOnce(plugins);
+  renderWithI18n(<PluginsRoute />);
+  await userEvent.click(await screen.findByRole("button", { name: "卡片" }));
+  const row = (await screen.findByRole("button", { name: /展开 Waza Test/ })).closest(".tool-list-row");
+  expect(row?.querySelector('[data-tooltip="OpenCode 已配置技能目录"]')).toBeInTheDocument();
+  expect(row?.querySelector('[aria-label="插件宿主及技能目录配置"]')).toBeInTheDocument();
+});
+
+test.each([
+  { enabledState: "disabled" as const, installState: "installed" as const, status: "ready" as const, nativeLabel: "OpenCode 已安装（未启用）" },
+  { enabledState: "enabled" as const, installState: "broken" as const, status: "scan-error" as const, nativeLabel: "OpenCode 已安装（异常）" },
+])("keeps native OpenCode state and configured skills separately visible: $nativeLabel", async ({ enabledState, installState, status, nativeLabel }) => {
+  const plugins: PluginSummary[] = [{
+    ...pluginFixtures[0],
+    name: "Waza Test",
+    hostTool: "opencode",
+    configuredSkillHosts: ["opencode"],
+    enabledState,
+    installState,
+    status,
+  }];
+  vi.spyOn(skillClient, "fetchStartupInstalledPlugins").mockResolvedValueOnce(plugins);
+  renderWithI18n(<PluginsRoute />);
+  await userEvent.click(await screen.findByRole("button", { name: "卡片" }));
+  const summary = await screen.findByRole("button", { name: /展开 Waza Test/ });
+  expect(within(summary).getByRole("img", { name: nativeLabel })).toBeInTheDocument();
+  expect(within(summary).getByRole("img", { name: "OpenCode 已配置技能目录" })).toBeInTheDocument();
+  expect(summary).toHaveAttribute("aria-description", `${nativeLabel}; OpenCode 已配置技能目录`);
+  expect(summary).toHaveAttribute("data-tooltip", `${nativeLabel}; OpenCode 已配置技能目录`);
+  summary.focus();
+  expect(summary).toHaveFocus();
+});
+
 test("shows host icons in the trailing host badge and collapses the rest into +N", async () => {
   const hostTools: PluginHostTool[] = [
     "codex",
